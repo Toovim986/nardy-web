@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, viewport-fit=cover">
+		<meta name="theme-color" content="#45231a">
+		<title>Нарды</title>
+		<style>
+html, body, #canvas {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+body {
+	color: white;
+	background-color: #181128;
+	overflow: hidden;
+	touch-action: none;
+}
+
+#canvas {
+	display: block;
+}
+
+#canvas:focus {
+	outline: none;
+}
+
+#status, #status-splash, #status-progress {
+	position: absolute;
+	left: 0;
+	right: 0;
+}
+
+#status, #status-splash {
+	top: 0;
+	bottom: 0;
+}
+
+#status {
+	/* Splash art (user's Baghdad title screen): portrait image on phones, landscape on wide windows. */
+	background-color: #45231a;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	visibility: hidden;
+}
+
+@media (min-aspect-ratio: 1/1) {
+	#status {
+		background: #45231a url("index.splash-landscape.jpg") center / cover no-repeat;
+	}
+	#status-splash {
+		display: none !important;
+	}
+}
+
+#status-splash {
+	max-height: 100%;
+	max-width: 100%;
+	margin: auto;
+}
+
+#status-splash.show-image--false {
+	display: none;
+}
+
+#status-splash.fullsize--true {
+	height: 100%;
+	width: 100%;
+	object-fit: cover;
+}
+
+#status-splash.use-filter--false {
+	image-rendering: pixelated;
+}
+
+#status-progress, #status-notice {
+	display: none;
+}
+
+/* Project: the splash is a portrait image fitted into the window; the progress bar and its
+   caption stay within that column instead of spanning a wide desktop window. */
+:root {
+	--splash-w: min(100vw, calc(100vh * 1080 / 1920));
+}
+
+
+#status-progress {
+	bottom: 7%;
+	width: calc(var(--splash-w) * 0.62);
+	height: 6px;
+	margin: 0 auto;
+	-webkit-appearance: none;
+	appearance: none;
+	border: 0;
+	border-radius: 3px;
+	background: rgba(40, 18, 12, 0.7);
+	box-shadow: 0 0 0 1px rgba(204, 188, 154, 0.35);
+	overflow: hidden;
+}
+
+#status-progress::-webkit-progress-bar {
+	background: rgba(40, 18, 12, 0.7);
+	border-radius: 3px;
+}
+
+#status-progress::-webkit-progress-value {
+	background: linear-gradient(90deg, #ccbc9a, #efdcb6);
+	border-radius: 3px;
+}
+
+#status-progress::-moz-progress-bar {
+	background: linear-gradient(90deg, #ccbc9a, #efdcb6);
+	border-radius: 3px;
+}
+
+#status-caption {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: calc(7% + 14px);
+	text-align: center;
+	color: #efdcb6;
+	font: 600 13px/1.2 Montserrat, 'Segoe UI', Roboto, Arial, sans-serif;
+	letter-spacing: 0.02em;
+	text-shadow: 0 1px 3px #0d0e12;
+	display: none;
+}
+
+#recovery {
+	position: fixed;
+	inset: 0;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	background: rgba(24, 17, 40, 0.92);
+	z-index: 10;
+}
+
+#recovery > div {
+	max-width: min(86vw, 360px);
+	padding: 20px 22px;
+	border-radius: 12px;
+	border: 1px solid rgba(204, 188, 154, 0.45);
+	background: #1f2129;
+	color: #ece7db;
+	font: 500 15px/1.45 Montserrat, 'Segoe UI', Roboto, Arial, sans-serif;
+	text-align: center;
+}
+
+#recovery button {
+	margin-top: 14px;
+	min-height: 48px;
+	padding: 0 22px;
+	border: 0;
+	border-radius: 8px;
+	background: linear-gradient(90deg, #ccbc9a, #efdcb6);
+	color: #14161c;
+	font: 700 15px Montserrat, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+#status-notice {
+	background-color: #5b3943;
+	border-radius: 0.5rem;
+	border: 1px solid #9b3943;
+	color: #e0e0e0;
+	font-family: 'Noto Sans', 'Droid Sans', Arial, sans-serif;
+	line-height: 1.3;
+	margin: 0 2rem;
+	overflow: hidden;
+	padding: 1rem;
+	text-align: center;
+	z-index: 1;
+}
+@media (min-aspect-ratio: 1/1) {
+	:root {
+		--splash-w: min(100vw, calc(100vh * 16 / 9));
+	}
+}
+		</style>
+		<link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+
+	</head>
+	<body>
+		<canvas id="canvas">
+			Your browser does not support the canvas tag.
+		</canvas>
+
+		<noscript>
+			Your browser does not support JavaScript.
+		</noscript>
+
+		<div id="status">
+			<img id="status-splash" class="show-image--true fullsize--true use-filter--true" src="index.png" alt="">
+			<div id="status-caption">Загрузка…</div>
+			<progress id="status-progress"></progress>
+			<div id="status-notice"></div>
+		</div>
+
+		<div id="recovery"><div>
+			<div id="recovery-text">Браузер сбросил графику (обычно из-за нехватки памяти). Партия сохранена — перезапускаем игру…</div>
+			<button id="recovery-button" type="button">Перезапустить</button>
+		</div></div>
+
+		<script>
+// Project: phones report devicePixelRatio 3; a 3x canvas (~3 MPx on iPhone) costs fill rate and
+// GPU memory for every frame. Cap the canvas density at 2x: text stays sharp, ~2.25x fewer pixels.
+(function () {
+	const real = window.devicePixelRatio || 1;
+	if (real > 2) {
+		try {
+			Object.defineProperty(window, 'devicePixelRatio', { get: function () { return 2; }, configurable: true });
+		} catch (e) { /* keep the native ratio */ }
+	}
+}());
+// Project: when the browser drops the WebGL context (iOS under memory pressure), the engine
+// cannot recover. Intercept the event before the engine's alert, show an explanation and
+// reload with ?resume=1 so the saved game continues. Auto-reload at most once a minute.
+(function () {
+	const KEY = 'nardy-webgl-recovery';
+	function reloadWithResume() {
+		const url = new URL(window.location.href);
+		url.searchParams.set('resume', '1');
+		window.location.replace(url.toString());
+	}
+	document.getElementById('recovery-button').addEventListener('click', reloadWithResume);
+	window.addEventListener('webglcontextlost', function (ev) {
+		ev.preventDefault();
+		ev.stopImmediatePropagation();
+		document.getElementById('recovery').style.display = 'flex';
+		let last = 0;
+		try { last = Number(sessionStorage.getItem(KEY) || 0); } catch (e) { /* storage blocked */ }
+		const now = Date.now();
+		if (now - last > 60000) {
+			try { sessionStorage.setItem(KEY, String(now)); } catch (e) { /* storage blocked */ }
+			// Give the engine a moment to flush the last save to IndexedDB.
+			setTimeout(reloadWithResume, 1500);
+		} else {
+			document.getElementById('recovery-text').textContent = 'Графика сбрасывается повторно. Закройте другие вкладки или приложения и нажмите «Перезапустить». Партия сохранена.';
+		}
+	}, true);
+}());
+		</script>
+		<script src="index.js"></script>
+		<script>
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":20015292,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+const GODOT_THREADS_ENABLED = false;
+const engine = new Engine(GODOT_CONFIG);
+
+(function () {
+	const statusOverlay = document.getElementById('status');
+	const statusProgress = document.getElementById('status-progress');
+	const statusNotice = document.getElementById('status-notice');
+	const statusCaption = document.getElementById('status-caption');
+
+	let initializing = true;
+	let statusMode = '';
+
+	function setStatusMode(mode) {
+		if (statusMode === mode || !initializing) {
+			return;
+		}
+		if (mode === 'hidden') {
+			statusOverlay.remove();
+			initializing = false;
+			return;
+		}
+		statusOverlay.style.visibility = 'visible';
+		statusProgress.style.display = mode === 'progress' ? 'block' : 'none';
+		statusCaption.style.display = mode === 'progress' ? 'block' : 'none';
+		statusNotice.style.display = mode === 'notice' ? 'block' : 'none';
+		statusMode = mode;
+	}
+
+	function setStatusNotice(text) {
+		while (statusNotice.lastChild) {
+			statusNotice.removeChild(statusNotice.lastChild);
+		}
+		const lines = text.split('\n');
+		lines.forEach((line) => {
+			statusNotice.appendChild(document.createTextNode(line));
+			statusNotice.appendChild(document.createElement('br'));
+		});
+	}
+
+	function displayFailureNotice(err) {
+		console.error(err);
+		if (err instanceof Error) {
+			setStatusNotice(err.message);
+		} else if (typeof err === 'string') {
+			setStatusNotice(err);
+		} else {
+			setStatusNotice('An unknown error occurred.');
+		}
+		setStatusMode('notice');
+		initializing = false;
+	}
+
+	const missing = Engine.getMissingFeatures({
+		threads: GODOT_THREADS_ENABLED,
+	});
+
+	if (missing.length !== 0) {
+		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
+			let serviceWorkerRegistrationPromise;
+			try {
+				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
+			} catch (err) {
+				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
+			}
+			// There's a chance that installing the service worker would fix the issue
+			Promise.race([
+				serviceWorkerRegistrationPromise.then((registration) => {
+					if (registration != null) {
+						return Promise.reject(new Error('Service worker already exists.'));
+					}
+					return registration;
+				}).then(() => engine.installServiceWorker()),
+				// For some reason, `getRegistration()` can stall
+				new Promise((resolve) => {
+					setTimeout(() => resolve(), 2000);
+				}),
+			]).then(() => {
+				// Reload if there was no error.
+				window.location.reload();
+			}).catch((err) => {
+				console.error('Error while registering service worker:', err);
+			});
+		} else {
+			// Display the message as usual
+			const missingMsg = 'Error\nThe following features required to run Godot projects on the Web are missing:\n';
+			displayFailureNotice(missingMsg + missing.join('\n'));
+		}
+	} else {
+		setStatusMode('progress');
+		engine.startGame({
+			'onProgress': function (current, total) {
+				if (current > 0 && total > 0) {
+					statusProgress.value = current;
+					statusProgress.max = total;
+					statusCaption.textContent = 'Загрузка ' + Math.min(100, Math.floor(current * 100 / total)) + '%';
+				} else {
+					statusProgress.removeAttribute('value');
+					statusProgress.removeAttribute('max');
+				}
+			},
+		}).then(() => {
+			setStatusMode('hidden');
+		}, displayFailureNotice);
+	}
+}());
+		</script>
+	</body>
+</html>
+
