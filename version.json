@@ -1,9 +1,9 @@
 {
   "game": "Нарды",
   "stage": "prototype (mobile stage 1, web preview)",
-  "commit": "eeed3a574e82713e2637f6e5aa6e95242dcee5af",
+  "commit": "02620c92d7f1f4321143812dc7d88a944d0ac162",
   "dirty": false,
   "godot": "4.7.2.stable.official.ed1daf0bf",
   "mode": "release",
-  "built_at_utc": "2026-10-19T09:06:30.852Z"
+  "built_at_utc": "2026-10-19T09:13:01.866Z"
 }
